@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import colorchooser, messagebox, simpledialog
 from random import randint
 from PIL import Image, ImageTk
+import os.path
 
 
 class App:
@@ -13,9 +14,9 @@ class App:
     self.found_letters = []
     self.slovo = ""
     self.wrong = 0
-    self.image = Image.open('images\construction.png')
+    self.images = ['construction','head','torso','left_hand','right_hand','left_leg','right_leg']
     self.letter = ""
-    self.uhadnute = []
+    self.uhadnute = ["."]
     self.text = 'black'
     self.x = 0
     self.y = 0
@@ -28,8 +29,8 @@ class App:
     # Nastavení obrazovky
     screen_width = self.parent.winfo_screenwidth()
     screen_height = self.parent.winfo_screenheight()
-    width = screen_width / 3*2
-    height = screen_width / 5*2
+    width = screen_width / 3*2 - 45
+    height = screen_width / 5*2 - 50
     x = (screen_width/2) - (width/2)
     y = (screen_height/2) - (height/2)
     root.geometry('%dx%d+%d+%d' % (width, height, x, y))
@@ -55,13 +56,13 @@ class App:
     menu.add_command(label='Vzdát se',command=self.give_up)
 
     self.container.pack(fill=BOTH)
-    self.canvas = Canvas(self.parent, width=screen_width / 3 * 2, height=screen_height / 5 * 2, bg=self.color_bg, highlightthickness=3, highlightbackground="gray")
+    self.canvas = Canvas(self.parent, width=screen_width / 5 * 2, height=screen_height / 5 * 2, bg=self.color_bg, highlightthickness=3, highlightbackground="gray")
 
     self.cvs()
 
+
   # Načtení slova ze souboru
   def files(self):  # DONE
-    
     # Načtení slov do proměnné
     words = []
     with open('words.txt', 'r') as file:
@@ -75,35 +76,42 @@ class App:
     rand_idx = randint(0, len(words))
     self.slovo = words[rand_idx]
     print("Slovo: "+self.slovo)
+    for a in self.slovo:
+      self.found_letters.append(" _ ")
     
 
   # Canvas:
 
   def cvs(self):
-    # Text
-    mid_pos = self.parent.winfo_screenwidth()/5
-    self.canvas.create_text(mid_pos,50,text="Vítejte !",font=("Courier",18),fill=self.text)
-
-    img = ImageTk.PhotoImage(self.image)
-    mg = Label(self.canvas,image=img).pack()
+    # Text "Vítejte"
+    self.canvas.create_text(self.parent.winfo_screenwidth()/5,50,text="Vítejte !",font=("Courier",18),fill=self.text)
+    # Obrázek
+    img = ImageTk.PhotoImage(Image.open(os.path.normpath('images/'+self.images[self.wrong]+'.png')))
+    mg = Label(self.canvas,image=img,background="White")
+    mg.image = img
+    mg.place(x=600,y=3)
 
     # Zobrazení slova/čárek
     x = 0
     y = 0
+    g = 0
     for a in self.slovo:
       if self.letter == a:
-        self.canvas.create_text(50+x,125,text=" "+self.letter+" ",anchor="w",font=("Courier",14),fill=self.text)
         if self.found_letters[y] == " _ ":
           self.found_letters[y] = self.letter
-      elif self.letter == self.found_letters[y]:
-        self.canvas.create_text(50+x,125,text=" "+self.letter+" ",anchor="w",font=("Courier",14),fill=self.text)
-      else:
-        self.canvas.create_text(50+x,125,text=" _ ",anchor="w",font=("Courier",14),fill=self.text)
+      for b in self.found_letters:
+        self.canvas.create_text(50+x,125,text=""+self.found_letters[y]+"",anchor="w",font=("Courier",14),fill=self.text)
+        if self.found_letters[y] != " _ ":
+          g += 1
       y += 1
       x = x+33
+    print(self.found_letters)
+
+    if g == len(self.slovo):
+      win()
 
     # Tlačítko
-    btn = Button(self.canvas, text="Zadat písmeno", command=self.pismeno_input).pack(side=LEFT)
+    btn = Button(self.canvas, text="Zadat písmeno", command=self.pismeno_input).place(x=55,y=155)
 
     self.canvas.pack(fill=BOTH,expand=True)
     
@@ -112,8 +120,9 @@ class App:
 
   # Zadání písmena
   def pismeno_input(self):
+    print("Input")
     guess = simpledialog.askstring("Písmeno", "Zadejte písmeno:", parent=root)
-    if self.letter:
+    if guess:
       self.letter = guess.upper()
       print(self.letter)
       self.hadanka()
@@ -121,25 +130,32 @@ class App:
 
   # Zjištění jestli je písmeno již zadané / ve slově
   def hadanka(self):
-    # Uhádnutí písmena ve slově
+    print("Finding")
+    v = 0
     if (len(self.letter)>1):
       print("More than one character")
       self.pismeno_input()
     elif not re.match("[A-Z]", self.letter):
       print("Wrong character")
+      self.pismeno_input()
     else:
-      for i in self.uhadnute:
+      for i in range(len(self.uhadnute)):
         if self.letter == self.uhadnute[i]:
           print("Already guessed")
+          self.pismeno_input()
         else:
           for n in self.slovo:
-            if (self.letter != n):
-              self.wrong += 1
+            if (n != self.letter):
+              v += 1
               print("Wrong letter")
-              self.uhadnute.append(self.letter)
             else:
               print("Right letter")
-              self.uhadnute.append(self.letter)
+      self.uhadnute.append(self.letter)
+    if v > 0:
+      while self.wrong < len(self.images):
+        self.wrong += 1
+      v = 0
+    print(self.wrong)
 
   # Překreslení canvasu - DONE
   def redraw_canvas(self):     
@@ -153,6 +169,26 @@ class App:
     self.wrong = 0
     print("Nová hra")
     self.files()
+  
+  # Výhra
+  def win(self):
+    wn = messagebox.askyesno('Výhra !', 'Chcete novou hru ?', icon='warning')
+    if wn == True:
+      print("Win - new game")
+      self.new_game()
+    else:
+      print("Win - end game")
+      root.destroy()
+
+  # Prohra
+  def lose(self):
+    ls = messagebox.askyesno('Prohra !', 'Chcete novou hru ?', icon='warning')
+    if ls == True:
+      print("Lose - new game")
+      self.new_game()
+    else:
+      print("Lose - end game")
+      root.destroy()
 
   # O programu
   def about(self):
@@ -175,12 +211,11 @@ class App:
   def give_up(self):
     print("Hráč se vzdává?")
     gu = messagebox.askyesno('Giving up ?', 'Are you sure about this ?', icon='warning')
-    if gu == TRUE:
+    if gu == True:
       print("Ano")
       self.new_game()
     else:
       print("Ne")
-      pass
 
 
 root = Tk()
