@@ -20,6 +20,8 @@ class App:
     self.text = 'black'
     self.x = 0
     self.y = 0
+    self.v = 0
+    self.g = 0
     self.parent = parent
     self.files()
     self.gui()
@@ -77,7 +79,7 @@ class App:
     self.slovo = words[rand_idx]
     print("Slovo: "+self.slovo)
     for a in self.slovo:
-      self.found_letters.append(" _ ")
+      self.found_letters.append("_")
     
 
   # Canvas:
@@ -94,27 +96,30 @@ class App:
     # Zobrazení slova/čárek
     x = 0
     y = 0
-    g = 0
     for a in self.slovo:
       if self.letter == a:
-        if self.found_letters[y] == " _ ":
+        if self.found_letters[y] == "_":
           self.found_letters[y] = self.letter
+          self.g += 1
       for b in self.found_letters:
         self.canvas.create_text(50+x,125,text=""+self.found_letters[y]+"",anchor="w",font=("Courier",14),fill=self.text)
-        if self.found_letters[y] != " _ ":
-          g += 1
       y += 1
       x = x+33
     print(self.found_letters)
-
-    if g == len(self.slovo):
-      win()
+    
+    if len(self.found_letters) == len(self.slovo):
+      if self.g == len(self.slovo):
+        print(len(self.slovo))
+        print(self.g)
+        self.win()
+    if self.wrong == len(self.images)-1:
+      self.lose()
 
     # Tlačítko
     btn = Button(self.canvas, text="Zadat písmeno", command=self.pismeno_input).place(x=55,y=155)
 
     self.canvas.pack(fill=BOTH,expand=True)
-    
+
 
   # Funkce:
 
@@ -131,12 +136,14 @@ class App:
   # Zjištění jestli je písmeno již zadané / ve slově
   def hadanka(self):
     print("Finding")
-    v = 0
+    self.v = 0
     if (len(self.letter)>1):
       print("More than one character")
+      messagebox.showinfo('Špatný počet znaků','Zadali jste špatný počet znaků.')
       self.pismeno_input()
     elif not re.match("[A-Z]", self.letter):
       print("Wrong character")
+      messagebox.showinfo('Špatný znak','Zadali jste špatný znak, zadejte prosím jen písmena A - Z.')
       self.pismeno_input()
     else:
       for i in range(len(self.uhadnute)):
@@ -145,34 +152,41 @@ class App:
           self.pismeno_input()
         else:
           for n in self.slovo:
-            if (n != self.letter):
-              v += 1
-              print("Wrong letter")
-            else:
-              print("Right letter")
+            #if (self.letter != n):
+              #print("Wrong letter")
+              #print(self.v)
+            #else:
+              self.v += 1
+              #print(self.v)
+              #print("Right letter")
       self.uhadnute.append(self.letter)
-    if v > 0:
-      while self.wrong < len(self.images):
-        self.wrong += 1
-      v = 0
-    print(self.wrong)
+    if self.v == 0:
+      self.wrong += 1
+      self.v = 0
+    print(self.wrong)  
 
   # Překreslení canvasu - DONE
   def redraw_canvas(self):     
     self.canvas.delete("all")
     self.cvs()
     print("Redrawing...")
-  
+
   # Nová hra - DONE
   def new_game(self):
-    self.redraw_canvas()
     self.wrong = 0
-    print("Nová hra")
+    self.g = 0
+    self.slovo = ""
+    self.found_letters = []
+    self.uhadnute = ["."]
+    self.letter = ""
     self.files()
+    self.redraw_canvas()
+    print("Nová hra")
   
   # Výhra
   def win(self):
-    wn = messagebox.askyesno('Výhra !', 'Chcete novou hru ?', icon='warning')
+    print("Win")
+    wn = messagebox.askyesno('Výhra !', 'Chcete novou hru ?', icon='information')
     if wn == True:
       print("Win - new game")
       self.new_game()
@@ -182,7 +196,8 @@ class App:
 
   # Prohra
   def lose(self):
-    ls = messagebox.askyesno('Prohra !', 'Chcete novou hru ?', icon='warning')
+    print("Lose")
+    ls = messagebox.askyesno('Prohra !', 'Chcete novou hru ?', icon='information')
     if ls == True:
       print("Lose - new game")
       self.new_game()
