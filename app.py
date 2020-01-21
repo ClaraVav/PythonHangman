@@ -152,13 +152,13 @@ class App:
           self.pismeno_input()
         else:
           for n in self.slovo:
-            #if (self.letter != n):
-              #print("Wrong letter")
-              #print(self.v)
-            #else:
+            if (self.letter == n):
               self.v += 1
               #print(self.v)
               #print("Right letter")
+            #else:
+              #print("Wrong letter")
+              #print(self.v)
       self.uhadnute.append(self.letter)
     if self.v == 0:
       self.wrong += 1
@@ -186,7 +186,7 @@ class App:
   # Výhra
   def win(self):
     print("Win")
-    wn = messagebox.askyesno('Výhra !', 'Chcete novou hru ?', icon='information')
+    wn = messagebox.askyesno('Výhra !', 'Chcete novou hru ?', icon='info')
     if wn == True:
       print("Win - new game")
       self.new_game()
@@ -197,7 +197,7 @@ class App:
   # Prohra
   def lose(self):
     print("Lose")
-    ls = messagebox.askyesno('Prohra !', 'Chcete novou hru ?', icon='information')
+    ls = messagebox.askyesno('Prohra !', 'Chcete novou hru ?', icon='info')
     if ls == True:
       print("Lose - new game")
       self.new_game()
